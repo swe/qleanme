@@ -1,11 +1,3 @@
-//
-//  ImagePicker.swift
-//  QleanMe
-//
-//  Created by weirdnameofadmin on 2024-10-13.
-//
-
-
 import SwiftUI
 import UIKit
 

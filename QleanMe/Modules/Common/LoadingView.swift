@@ -33,3 +33,4 @@ struct LoadingView_Previews: PreviewProvider {
         LoadingView()
     }
 }
+

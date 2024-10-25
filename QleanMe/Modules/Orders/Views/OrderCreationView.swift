@@ -1,130 +1,188 @@
 import SwiftUI
 
 struct OrderCreationView: View {
+    @State private var selectedService: OrderServiceType?
+    @State private var showServiceDetails = false
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var viewModel = OrderCreationViewModel()
+    
+    private var navigationTitle: String {
+        if showServiceDetails, let service = selectedService {
+            return "Order \(service.shortTitle)"
+        } else {
+            return "Select service"
+        }
+    }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ForEach(OrderCleaningType.allCases) { type in
-                            CleaningTypeCard(type: type, isSelected: viewModel.selectedCleaningType == type) {
-                                viewModel.selectCleaningType(type)
+        VStack {
+            if !showServiceDetails {
+                serviceSelectionView
+            } else if let service = selectedService {
+                serviceDetailsView(for: service)
+            }
+        }
+        .navigationBarBackButtonHidden(showServiceDetails)
+        .navigationBarTitle(navigationTitle, displayMode: .inline)
+        .toolbar {
+            if showServiceDetails {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        withAnimation {
+                            showServiceDetails = false
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private var serviceSelectionView: some View {
+        VStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    ForEach(OrderServiceType.allCases) { service in
+                        OrderSelectionCard(service: service, isSelected: selectedService == service) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedService = service
                             }
                         }
                     }
-                    .padding()
                 }
-                
-                Button(action: viewModel.proceedToNextStep) {
-                    HStack {
-                        Text("Next")
-                        Image(systemName: "arrow.right")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(viewModel.isNextButtonActive ? Color.blue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .disabled(!viewModel.isNextButtonActive)
                 .padding(.horizontal)
-                .padding(.bottom, 30)
+                .padding(.vertical, 25)
             }
-            .navigationBarTitle("Select service", displayMode: .inline)
-            .navigationBarItems(trailing: cancelButton)
-            .navigationDestination(isPresented: $viewModel.shouldNavigateToDetail) {
-                destinationView
+            
+            Button(action: {
+                withAnimation {
+                    showServiceDetails = true
+                }
+            }) {
+                HStack {
+                    Text("Continue")
+                        .fontWeight(.semibold)
+                    
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    Group {
+                        if let service = selectedService {
+                            LinearGradient(
+                                gradient: Gradient(colors: service.gradientColors),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        } else {
+                            Color.gray.opacity(0.3)
+                        }
+                    }
+                )
+                .foregroundColor(.white)
+                .cornerRadius(12)
             }
+            .disabled(selectedService == nil)
+            .padding(.horizontal)
+            .padding(.bottom, 30)
         }
     }
     
-    private var destinationView: some View {
-        Group {
-            switch viewModel.selectedCleaningType {
-            case .baseCleaning:
-                OrderBaseCleaningView()
-            case .carDetailing:
-                OrderCarDetailingView(viewModel: OrderCarDetailingViewModel())
-            case .laundry:
-                OrderLaundryView(viewModel: OrderLaundryViewModel())
-            case .none:
-                EmptyView()
-            }
+    @ViewBuilder
+    private func serviceDetailsView(for service: OrderServiceType) -> some View {
+        switch service {
+        case .laundry:
+            OrderLaundryView()
+        default:
+            Text("Service coming soon!")
+                .font(.title)
+                .foregroundColor(.secondary)
         }
-    }
-    
-    private var cancelButton: some View {
-        Button("Cancel", action: dismiss)
-    }
-    
-    private func dismiss() {
-        presentationMode.wrappedValue.dismiss()
     }
 }
 
-struct CleaningTypeCard: View {
-    let type: OrderCleaningType
+struct OrderSelectionCard: View {
+    let service: OrderServiceType
     let isSelected: Bool
     let action: () -> Void
     
+    @Environment(\.colorScheme) private var colorScheme
+    
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: type.iconName)
-                    .foregroundColor(.blue)
-                    .font(.system(size: 24))
-                    .frame(width: 32, height: 32)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(type.rawValue)
-                        .font(.headline)
-                    Text(type.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 16) {
+                ZStack {
+                    LinearGradient(
+                        gradient: Gradient(colors: service.gradientColors),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(width: 50, height: 50)
+                    .clipShape(Circle())
+                    
+                    Image(systemName: service.iconName)
+                        .font(.title2)
+                        .foregroundColor(.white)
                 }
-                .frame(maxWidth: .infinity * 0.7, alignment: .leading)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(service.rawValue)
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    
+                    Text(service.description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
                 
                 Spacer()
                 
-                Image(systemName: "checkmark")
-                    .font(.system(size: 24))
-                    .foregroundStyle(checkmarkStyle)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .opacity(isSelected ? 1 : 0.5)
             }
-            .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(10)
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(UIColor.secondarySystemBackground))
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(
                         LinearGradient(
-                            gradient: Gradient(colors: isSelected ? [.blue, .purple] : [Color.gray.opacity(0.3), Color.gray.opacity(0.3)]),
+                            gradient: Gradient(colors: isSelected ? service.gradientColors : [Color.clear]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 2
                     )
             )
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
+                    radius: isSelected ? 10 : 5,
+                    x: 0,
+                    y: isSelected ? 5 : 2)
+            .scaleEffect(isSelected ? 1.02 : 1)
         }
         .buttonStyle(PlainButtonStyle())
-    }
-    
-    private var checkmarkStyle: AnyShapeStyle {
-        if isSelected {
-            return AnyShapeStyle(LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .topLeading, endPoint: .bottomTrailing))
-        } else {
-            return AnyShapeStyle(Color.white.opacity(0.001))
-        }
     }
 }
 
 struct OrderCreationView_Previews: PreviewProvider {
     static var previews: some View {
-        OrderCreationView()
+        Group {
+            OrderCreationView()
+                .preferredColorScheme(.light)
+            
+            OrderCreationView()
+                .preferredColorScheme(.dark)
+        }
     }
 }

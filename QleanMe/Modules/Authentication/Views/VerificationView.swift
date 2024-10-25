@@ -51,7 +51,7 @@ struct VerificationView: View {
             case .contractorDashboard:
                 ContractorDashboardView()
             case .registration:
-                RegistrationView()
+                RegistrationView(phoneNumber: phoneNumber)
             }
         }
     }
@@ -174,12 +174,6 @@ struct VerificationView: View {
 struct ContractorDashboardView: View {
     var body: some View {
         Text("Contractor Dashboard")
-    }
-}
-
-struct RegistrationView: View {
-    var body: some View {
-        Text("Registration View")
     }
 }
 

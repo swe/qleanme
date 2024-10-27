@@ -12,7 +12,7 @@ import SwiftData
 struct QleanMeApp: App {
     var body: some Scene {
         WindowGroup {
-            WelcomeView()
+            RegisteredUserDashboardView()
         }
     }
 }

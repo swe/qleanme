@@ -95,14 +95,26 @@ struct OrderCreationView: View {
     }
     
     @ViewBuilder
-    private func serviceDetailsView(for service: OrderServiceType) -> some View {
-        switch service {
-        case .laundry:
-            OrderLaundryView()
+        private func serviceDetailsView(for service: OrderServiceType) -> some View {
+            switch service {
+            case .cleaning:
+                OrderHomeCleaningView()
+            case .laundry:
+                OrderLaundryView()
         default:
-            Text("Service coming soon!")
-                .font(.title)
-                .foregroundColor(.secondary)
+            VStack(spacing: 20) {
+                Image(systemName: "wrench.and.screwdriver")
+                    .font(.system(size: 50))
+                    .foregroundColor(.secondary)
+                Text("Coming Soon!")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+                Text("This service will be available shortly.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
         }
     }
 }

@@ -7,15 +7,22 @@ struct CustomerProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
-                    profileHeader
-                    statisticsCard
-                    menuItems
-                    logoutButton
-                    footerText
+                if viewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, 100)
+                } else {
+                    VStack(spacing: 24) {
+                        profileHeader
+                        statisticsCard
+                        menuItems
+                        logoutButton
+                        footerText
+                    }
+                    .padding()
+                    .padding(.bottom, 110) // Increased padding at the bottom
                 }
-                .padding()
-                .padding(.bottom, 110) // Increased padding at the bottom
             }
             .navigationTitle("My profile")
             .background(Color(UIColor.systemBackground))
@@ -32,23 +39,30 @@ struct CustomerProfileView: View {
                     secondaryButton: .cancel()
                 )
             }
-            .overlay(
-                Group {
-                    if viewModel.isLoggingOut {
-                        ProgressView("Logging out...")
-                            .padding()
-                            .background(Color(UIColor.systemBackground))
-                            .cornerRadius(10)
-                            .shadow(radius: 10)
-                    }
+            .overlay {
+                if viewModel.isLoggingOut {
+                    ProgressView("Logging out...")
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
                 }
-            )
+            }
+            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+                Button("OK") {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                }
+            }
         }
     }
     
     private var profileHeader: some View {
         HStack(spacing: 16) {
-            AsyncImage(url: URL(string: viewModel.profileImage.isEmpty ? viewModel.placeholderImageURL : viewModel.profileImage)) { image in
+            AsyncImage(url: URL(string: viewModel.profileImage)) { image in
                 image
                     .resizable()
                     .scaledToFill()
@@ -117,9 +131,7 @@ struct CustomerProfileView: View {
                     menuItemContent(icon: "person.crop.circle", title: "Profile details")
                 }
                 Divider()
-                NavigationLink(destination: SettingsView()) {
-                    menuItemContent(icon: "gearshape", title: "Settings")
-                }
+                menuItem(icon: "gearshape", title: "Settings", action: viewModel.navigateToSettings)
                 Divider()
                 menuItem(icon: "gift", title: "Refer a friend", action: viewModel.navigateToReferralProgram)
                 Divider()

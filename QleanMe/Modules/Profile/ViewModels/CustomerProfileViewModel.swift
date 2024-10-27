@@ -13,24 +13,41 @@ class CustomerProfileViewModel: ObservableObject {
     @Published var showMailComposer: Bool = false
     @Published var isLoggingOut: Bool = false
     @Published var showLogoutConfirmation: Bool = false
-    
-    let placeholderImageURL = "https://i.alleksy.com/qlean/photoPlaceholder.png"
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     private var cancellables = Set<AnyCancellable>()
+    private let networkManager: NetworkManager
     
-    init() {
+    init(networkManager: NetworkManager = .shared) {
+        self.networkManager = networkManager
         fetchUserData()
     }
     
     private func fetchUserData() {
-        // TODO: Implement actual data fetching from Supabase
-        // For now, we'll use placeholder data
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.userName = "John Peterson"
-            self.phoneNumber = "+16045551234"
-            self.profileImage = "" // Empty string to simulate no profile picture
-            self.completedOrders = 5
-            self.averageRating = 4.8
+        isLoading = true
+        
+        Task {
+            do {
+                let userPhone = UserDefaults.standard.string(forKey: "userPhoneNumber") ?? ""
+                let profile = try await networkManager.fetchUserProfile(phoneNumber: userPhone)
+                
+                await MainActor.run {
+                    userName = profile.fullName
+                    phoneNumber = profile.phoneNumber
+                    profileImage = profile.photoUrl
+                    completedOrders = profile.amountOfOrders
+                    averageRating = profile.amountOfOrders > 0
+                        ? Double(profile.totalRating) / Double(profile.amountOfOrders)
+                        : 0.0
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isLoading = false
+                }
+            }
         }
     }
     
@@ -74,9 +91,7 @@ class CustomerProfileViewModel: ObservableObject {
         if MFMailComposeViewController.canSendMail() {
             showMailComposer = true
         } else {
-            // Handle the case where the device can't send emails
             print("Device cannot send emails")
-            // You might want to show an alert to the user here
         }
     }
     
@@ -86,23 +101,17 @@ class CustomerProfileViewModel: ObservableObject {
     
     func logout() {
         isLoggingOut = true
-        // TODO: Implement actual logout logic using Supabase
-        // For now, we'll simulate a network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // Clear user data
-            self.userName = ""
-            self.phoneNumber = ""
-            self.profileImage = ""
-            self.completedOrders = 0
-            self.averageRating = 0.0
-            
-            // TODO: Navigate to the WelcomeView or LoginView
-            print("User logged out successfully")
-            self.isLoggingOut = false
-            
-            // In a real app, you would use your app's navigation system to return to the login or welcome screen
-            // For example, if using the new SwiftUI navigation system:
-            // navigationPath.removeLast(navigationPath.count)
+        Task {
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            await MainActor.run {
+                UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
+                userName = ""
+                phoneNumber = ""
+                profileImage = ""
+                completedOrders = 0
+                averageRating = 0.0
+                isLoggingOut = false
+            }
         }
     }
 }

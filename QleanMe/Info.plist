@@ -7,5 +7,7 @@
 		<string>remote-notification</string>
 		<string>location</string>
 	</array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>We need your location to find cleaning services near you.</string>
 </dict>
 </plist>

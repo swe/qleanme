@@ -29,7 +29,15 @@ struct OrdersActiveView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(viewModel.orders) { orderInfo in
-                    OrderTileView(orderInfo: orderInfo, toggleExpansion: viewModel.toggleExpansion, cancelOrder: { Task { await viewModel.cancelOrder(orderId: orderInfo.id) } })
+                    OrderTileView(
+                        orderInfo: orderInfo,
+                        toggleExpansion: viewModel.toggleExpansion,
+                        cancelOrder: {
+                            Task {
+                                await viewModel.cancelOrder(orderId: orderInfo.id)
+                            }
+                        }
+                    )
                 }
             }
             .padding()
@@ -108,7 +116,7 @@ struct OrderTileView: View {
                     .foregroundColor(.blue)
                     .font(.title2)
                     .fontWeight(.bold) +
-                Text(orderInfo.formattedPrice.dropFirst())
+                Text(orderInfo.formattedPrice)
                     .foregroundColor(colorScheme == .dark ? .white : .black)
                     .font(.title2)
                     .fontWeight(.bold)
@@ -116,9 +124,7 @@ struct OrderTileView: View {
                 Spacer()
                 
                 Button(action: {
-                    withAnimation {
-                        toggleExpansion(orderInfo.id)
-                    }
+                    toggleExpansion(orderInfo.id)
                 }) {
                     Image(systemName: "chevron.down")
                         .rotationEffect(.degrees(orderInfo.isExpanded ? 180 : 0))
@@ -156,6 +162,18 @@ struct OrderTileView: View {
             Button("No", role: .cancel) { }
         } message: {
             Text("Are you sure you want to cancel this order?")
+        }
+    }
+}
+
+struct DetailRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+            Text(text)
         }
     }
 }
@@ -203,30 +221,20 @@ struct RatingBadge: View {
     }
 }
 
-struct DetailRow: View {
-    let icon: String
-    let text: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-            Text(text)
-        }
-    }
-}
-
 struct ErrorView: View {
     let message: String
     let retryAction: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.red)
             Text("Error")
                 .font(.title)
-                .foregroundColor(.red)
             Text(message)
                 .multilineTextAlignment(.center)
-            Button("Retry") {
+            Button("Try Again") {
                 retryAction()
             }
             .padding()
@@ -241,8 +249,12 @@ struct ErrorView: View {
 struct OrdersActiveView_Previews: PreviewProvider {
     static var previews: some View {
         OrdersActiveView()
+            .preferredColorScheme(.light)
+        
+        OrdersActiveView()
+            .preferredColorScheme(.dark)
         
         NoOrdersView()
-            .previewDisplayName("No Orders View")
+            .previewDisplayName("No Orders")
     }
 }

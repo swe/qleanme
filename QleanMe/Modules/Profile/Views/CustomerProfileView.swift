@@ -1,8 +1,10 @@
 import SwiftUI
+import MessageUI
 
 struct CustomerProfileView: View {
     @StateObject private var viewModel = CustomerProfileViewModel()
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isEditProfileActive = false
     
     var body: some View {
         NavigationView {
@@ -28,6 +30,13 @@ struct CustomerProfileView: View {
             .background(Color(UIColor.systemBackground))
             .sheet(isPresented: $viewModel.showReferralProgram) {
                 ReferralProgramView()
+            }
+            .sheet(isPresented: $viewModel.showMailComposer) {
+                MailView(
+                    result: { result in
+                        viewModel.showMailComposer = false
+                    }
+                )
             }
             .alert(isPresented: $viewModel.showLogoutConfirmation) {
                 Alert(
@@ -56,6 +65,9 @@ struct CustomerProfileView: View {
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                 }
+            }
+            .onAppear {
+                viewModel.fetchUserData()
             }
         }
     }
@@ -127,11 +139,19 @@ struct CustomerProfileView: View {
     private var menuItems: some View {
         VStack(spacing: 0) {
             Group {
-                NavigationLink(destination: CustomerEditProfileView()) {
+                NavigationLink(
+                    destination: CustomerEditProfileView()
+                        .onDisappear {
+                            viewModel.fetchUserData()
+                        }
+                        .environment(\.hideTabBar, true)
+                ) {
                     menuItemContent(icon: "person.crop.circle", title: "Profile details")
                 }
                 Divider()
-                menuItem(icon: "gearshape", title: "Settings", action: viewModel.navigateToSettings)
+                NavigationLink(destination: SettingsView()) {
+                    menuItemContent(icon: "gearshape", title: "Settings")
+                }
                 Divider()
                 menuItem(icon: "gift", title: "Refer a friend", action: viewModel.navigateToReferralProgram)
                 Divider()
@@ -204,6 +224,49 @@ struct CustomerProfileView: View {
             )
             .multilineTextAlignment(.center)
             .padding(.top, 8)
+    }
+}
+
+struct MailView: UIViewControllerRepresentable {
+    @Environment(\.presentationMode) private var presentationMode
+    let result: (Result<MFMailComposeResult, Error>) -> Void
+    
+    class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+        @Binding private var presentationMode: PresentationMode
+        let result: (Result<MFMailComposeResult, Error>) -> Void
+        
+        init(presentationMode: Binding<PresentationMode>,
+             result: @escaping (Result<MFMailComposeResult, Error>) -> Void) {
+            _presentationMode = presentationMode
+            self.result = result
+        }
+        
+        func mailComposeController(_ controller: MFMailComposeViewController,
+                                 didFinishWith result: MFMailComposeResult,
+                                 error: Error?) {
+            if let error = error {
+                self.result(.failure(error))
+            } else {
+                self.result(.success(result))
+            }
+            $presentationMode.wrappedValue.dismiss()
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(presentationMode: presentationMode, result: result)
+    }
+    
+    func makeUIViewController(context: UIViewControllerRepresentableContext<MailView>) -> MFMailComposeViewController {
+        let mailComposer = MFMailComposeViewController()
+        mailComposer.mailComposeDelegate = context.coordinator
+        mailComposer.setToRecipients(["support@qleanme.com"])
+        mailComposer.setSubject("QleanMe Support Request")
+        return mailComposer
+    }
+    
+    func updateUIViewController(_ uiViewController: MFMailComposeViewController,
+                              context: UIViewControllerRepresentableContext<MailView>) {
     }
 }
 

@@ -345,7 +345,7 @@ struct HomeCleaningAdditionalView: View {
     }
 }
 
-// Supporting Views
+/* Supporting Views
 struct SectionHeader: View {
     let icon: String
     let title: String
@@ -360,6 +360,7 @@ struct SectionHeader: View {
         }
     }
 }
+*/
 
 struct GradientIcon: View {
     let icon: String

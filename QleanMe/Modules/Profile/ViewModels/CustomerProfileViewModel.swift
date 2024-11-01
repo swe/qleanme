@@ -24,7 +24,7 @@ class CustomerProfileViewModel: ObservableObject {
         fetchUserData()
     }
     
-    private func fetchUserData() {
+    func fetchUserData() {
         isLoading = true
         
         Task {

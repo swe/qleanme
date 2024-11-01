@@ -99,8 +99,8 @@ struct OrderCreationView: View {
             switch service {
             case .cleaning:
                 OrderHomeCleaningView()
-            case .laundry:
-                OrderLaundryView()
+            // case .laundry:
+            //     OrderLaundryView()
         default:
             VStack(spacing: 20) {
                 Image(systemName: "wrench.and.screwdriver")

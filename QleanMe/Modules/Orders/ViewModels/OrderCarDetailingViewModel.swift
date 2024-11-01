@@ -267,6 +267,7 @@ class OrderCarDetailingViewModel: ObservableObject {
                     dateTime: dateWithTime,
                     price: totalPrice,
                     duration: 120, // 2 hours default
+                    // address: "555 Austin Ave, Coquitlam", // This was the missing parameter
                     specialInstructions: specialInstructions.isEmpty ? nil : specialInstructions
                 )
                 

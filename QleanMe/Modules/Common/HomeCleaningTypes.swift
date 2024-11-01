@@ -4,7 +4,7 @@ import Foundation
 enum HomeCleaningType: String, CaseIterable, Identifiable {
     case regular = "Regular Cleaning"
     case deep = "Deep Cleaning"
-    case moveInOut = "Move In/Out Cleaning"
+    case moveInOut = "Moving Cleaning"
     
     var id: String { rawValue }
     
@@ -15,7 +15,7 @@ enum HomeCleaningType: String, CaseIterable, Identifiable {
         case .deep:
             return "Thorough cleaning including hard-to-reach areas and detailed attention"
         case .moveInOut:
-            return "Comprehensive cleaning for moving transitions"
+            return "Just let us to take care of your home while you move"
         }
     }
     
@@ -33,11 +33,11 @@ enum HomeCleaningType: String, CaseIterable, Identifiable {
     var basePrice: Decimal {
         switch self {
         case .regular:
-            return Decimal(string: "129.99")!
+            return Decimal(string: "32.99")!
         case .deep:
-            return Decimal(string: "199.99")!
+            return Decimal(string: "62.99")!
         case .moveInOut:
-            return Decimal(string: "249.99")!
+            return Decimal(string: "387.99")!
         }
     }
 }
@@ -52,11 +52,11 @@ enum PropertySize: String, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .small:
-            return "Up to 1,000 sq ft"
+            return "Up to 600 sq ft"
         case .medium:
-            return "1,000 - 2,000 sq ft"
+            return "601 - 1,000 sq ft"
         case .large:
-            return "2,000+ sq ft"
+            return "1,001+ sq ft"
         }
     }
     
@@ -65,9 +65,9 @@ enum PropertySize: String, CaseIterable, Identifiable {
         case .small:
             return Decimal(string: "1.0")!
         case .medium:
-            return Decimal(string: "1.3")!
+            return Decimal(string: "1.53")!
         case .large:
-            return Decimal(string: "1.6")!
+            return Decimal(string: "1.79")!
         }
     }
 }

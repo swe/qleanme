@@ -6,28 +6,43 @@ struct CustomerProfileView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var isEditProfileActive = false
     
+    private let gradientColors = [
+        Color(hex: 0x4776E6),
+        Color(hex: 0x8E54E9)
+    ]
+    
     var body: some View {
         NavigationView {
-            ScrollView {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 100)
-                } else {
-                    VStack(spacing: 24) {
-                        profileHeader
-                        statisticsCard
-                        menuItems
-                        logoutButton
-                        footerText
+            ZStack {
+                ScrollView {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, 100)
+                    } else {
+                        VStack(spacing: 24) {
+                            profileHeader
+                            statisticsCard
+                            menuItems
+                            logoutButton
+                            footerText
+                        }
+                        .padding()
+                        .padding(.bottom, 110)
                     }
-                    .padding()
-                    .padding(.bottom, 110) // Increased padding at the bottom
+                }
+                .navigationTitle("My profile")
+                .background(Color(UIColor.systemBackground))
+                
+                if viewModel.isLoggingOut {
+                    ProgressView("Logging out...")
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
                 }
             }
-            .navigationTitle("My profile")
-            .background(Color(UIColor.systemBackground))
             .sheet(isPresented: $viewModel.showReferralProgram) {
                 ReferralProgramView()
             }
@@ -45,17 +60,10 @@ struct CustomerProfileView: View {
                     primaryButton: .destructive(Text("Logout")) {
                         viewModel.logout()
                     },
-                    secondaryButton: .cancel()
+                    secondaryButton: .cancel {
+                        viewModel.cancelLogout()
+                    }
                 )
-            }
-            .overlay {
-                if viewModel.isLoggingOut {
-                    ProgressView("Logging out...")
-                        .padding()
-                        .background(Color(UIColor.systemBackground))
-                        .cornerRadius(10)
-                        .shadow(radius: 10)
-                }
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
@@ -65,6 +73,10 @@ struct CustomerProfileView: View {
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                 }
+            }
+            .fullScreenCover(isPresented: $viewModel.shouldNavigateToWelcome) {
+                WelcomeView()
+                    .transition(.move(edge: .trailing))
             }
             .onAppear {
                 viewModel.fetchUserData()
@@ -149,10 +161,10 @@ struct CustomerProfileView: View {
                     menuItemContent(icon: "person.crop.circle", title: "Profile details")
                 }
                 Divider()
-                NavigationLink(destination: SettingsView()) {
-                    menuItemContent(icon: "gearshape", title: "Settings")
-                }
-                Divider()
+                //  NavigationLink(destination: SettingsView()) {
+                //      menuItemContent(icon: "gearshape", title: "Settings")
+                //  }
+                //  Divider()
                 menuItem(icon: "gift", title: "Refer a friend", action: viewModel.navigateToReferralProgram)
                 Divider()
                 NavigationLink(destination: AboutView()) {
@@ -196,7 +208,7 @@ struct CustomerProfileView: View {
     
     private var logoutButton: some View {
         Button(action: {
-            viewModel.showLogoutConfirmation = true
+            viewModel.initiateLogout()
         }) {
             HStack {
                 Spacer()

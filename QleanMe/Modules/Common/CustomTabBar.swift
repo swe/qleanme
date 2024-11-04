@@ -4,9 +4,22 @@ struct CustomTabBar: View {
     @Binding var selectedTab: Int
     @Environment(\.colorScheme) private var colorScheme
     
-    let tabs: [String]  // Now just icon names
+    let tabs: [String]
     let action: (Int) -> Void
     var isHidden: Bool = false
+    
+    private func getIcon(for tab: String, isSelected: Bool) -> String {
+        switch tab {
+        case "house.circle":
+            return isSelected ? "house.circle.fill" : "house.circle"
+        case "plus":
+            return "plus" // Plus icon stays the same
+        case "person.circle":
+            return isSelected ? "person.circle.fill" : "person.circle"
+        default:
+            return tab
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -14,14 +27,32 @@ struct CustomTabBar: View {
                 HStack(spacing: 0) {
                     Spacer()
                     ForEach(0..<tabs.count, id: \.self) { index in
-                        TabButton(
-                            icon: tabs[index],
-                            isSelected: selectedTab == index,
-                            isMiddle: index == tabs.count / 2
-                        ) {
+                        Button(action: {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 selectedTab = index
                                 action(index)
+                            }
+                        }) {
+                            if index == 1 {  // Middle button (larger and brighter)
+                                Image(systemName: tabs[index])
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.white)
+                                    .frame(width: 60, height: 60)
+                                    .background(Color.blue)
+                                    .clipShape(Circle())
+                                    .offset(y: -15)
+                            } else {
+                                ZStack {
+                                    if selectedTab == index {
+                                        Circle()
+                                            .fill(Color.blue.opacity(0.15))
+                                            .frame(width: 50, height: 50)
+                                    }
+                                    Image(systemName: getIcon(for: tabs[index], isSelected: selectedTab == index))
+                                        .font(.system(size: 24))
+                                        .foregroundColor(selectedTab == index ? .blue : .gray)
+                                        .frame(width: 50, height: 50)
+                                }
                             }
                         }
                         if index != tabs.count - 1 {
@@ -30,17 +61,12 @@ struct CustomTabBar: View {
                     }
                     Spacer()
                 }
-                .frame(width: geometry.size.width * 0.6, height: 65)
+                .frame(width: geometry.size.width * 0.8, height: 60)
                 .background(
                     BlurView(style: colorScheme == .dark ? .dark : .light)
-                        .clipShape(RoundedRectangle(cornerRadius: 30))
+                        .cornerRadius(30)
                 )
-                .shadow(
-                    color: Color.black.opacity(0.15),
-                    radius: 8,
-                    x: 0,
-                    y: 2
-                )
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
                 .offset(y: -30)
             }

@@ -29,9 +29,9 @@ struct RegisteredUserDashboardView: View {
             CustomTabBar(
                 selectedTab: $viewModel.selectedTab,
                 tabs: [
-                    "house.fill",
-                    "plus.circle.fill",
-                    "person.fill"
+                    "house.circle",
+                    "plus",
+                    "person.circle"
                 ],
                 action: { index in
                     handleTabSelection(index)
@@ -70,6 +70,7 @@ struct RegisteredUserDashboardView: View {
             viewModel.showOrderCreation = true
         case 2:
             viewModel.showProfile()
+            viewModel.selectedTab = 2 // Ensure the tab stays selected
         default:
             break
         }
@@ -108,7 +109,12 @@ struct MainDashboardContent: View {
                         offersSection
                         ordersSection
                         
-                        Spacer(minLength: 100)
+                        if viewModel.selectedOrderFilter == .active {
+                            Spacer(minLength: 100)
+                        }
+                        if viewModel.selectedOrderFilter == .archive {
+                            Spacer(minLength: 100)
+                        }
                     }
                 }
                 .padding(.horizontal)
@@ -123,9 +129,19 @@ struct MainDashboardContent: View {
                 await viewModel.fetchOrders()
             }
         }
-        .navigationTitle("Welcome")
-        .navigationBarTitleDisplayMode(scrollOffset < -titleScrollThreshold ? .inline : .large)
+        .navigationTitle(viewModel.timeBasedGreeting)
+        .navigationBarTitleDisplayMode(.large)
     }
+    
+    private var welcomeSection: some View {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(viewModel.welcomeSuggestion)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+        }
     
     private var loadingView: some View {
         VStack(spacing: 16) {
@@ -136,30 +152,6 @@ struct MainDashboardContent: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
-    }
-    
-    private var welcomeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if scrollOffset >= -titleScrollThreshold {
-                Text(viewModel.userName)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: gradientColors,
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            }
-            
-            Text("What can we help you with today?")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .padding(.top, 4)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, scrollOffset >= -titleScrollThreshold ? 0 : 16)
-        .opacity(scrollOffset >= -titleScrollThreshold ? 1 : 0)
     }
     
     private var offersSection: some View {
@@ -173,7 +165,7 @@ struct MainDashboardContent: View {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-            .frame(height: 200)
+            .frame(height: 150)
             .clipShape(RoundedRectangle(cornerRadius: 24))
         }
     }
@@ -299,9 +291,11 @@ struct EmptyOrdersView: View {
                         )
                         .cornerRadius(12)
                 }
+                .padding(.top, 8)
             }
         }
-        .padding(32)
+        .frame(maxWidth: .infinity)
+        .padding(viewModel.showEmptyStateButton ? 32 : 24)
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(16)
     }

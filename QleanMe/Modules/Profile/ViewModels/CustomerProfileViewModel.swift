@@ -15,12 +15,15 @@ class CustomerProfileViewModel: ObservableObject {
     @Published var showLogoutConfirmation: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var shouldNavigateToWelcome: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     private let networkManager: NetworkManager
+    private let authManager: AuthenticationManager
     
-    init(networkManager: NetworkManager = .shared) {
+    init(networkManager: NetworkManager = .shared, authManager: AuthenticationManager = .shared) {
         self.networkManager = networkManager
+        self.authManager = authManager
         fetchUserData()
     }
     
@@ -99,19 +102,45 @@ class CustomerProfileViewModel: ObservableObject {
         showReferralProgram = true
     }
     
+    func initiateLogout() {
+        showLogoutConfirmation = true
+    }
+    
     func logout() {
         isLoggingOut = true
+        
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            await MainActor.run {
+            do {
+                // Clear all user defaults
                 UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
+                UserDefaults.standard.synchronize()
+                
+                // Reset all local state
                 userName = ""
                 phoneNumber = ""
                 profileImage = ""
                 completedOrders = 0
                 averageRating = 0.0
-                isLoggingOut = false
+                
+                // Update auth state
+                try await authManager.signOut()
+                
+                await MainActor.run {
+                    isLoggingOut = false
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        shouldNavigateToWelcome = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isLoggingOut = false
+                    errorMessage = "Failed to logout: \(error.localizedDescription)"
+                }
             }
         }
+    }
+    
+    func cancelLogout() {
+        showLogoutConfirmation = false
     }
 }

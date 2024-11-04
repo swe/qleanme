@@ -359,4 +359,35 @@ class RegisteredUserDashboardViewModel: ObservableObject {
         activeView = .profile
         selectedTab = 3
     }
+    
+    var timeBasedGreeting: String {
+            let hour = Calendar.current.component(.hour, from: Date())
+            switch hour {
+            case 5..<12: return "Good morning!"
+            case 12..<17: return "Good afternoon!"
+            case 17..<22: return "Good evening!"
+            default: return "Good night!"
+            }
+        }
+    
+        var welcomeSuggestion: String {
+            let hour = Calendar.current.component(.hour, from: Date())
+            
+            if activeOrders.isEmpty {
+                switch hour {
+                case 5..<12:
+                    return "Let's start fresh with a clean space!"
+                case 12..<17:
+                    return "Isn't it a perfect time for a cleaning service?"
+                case 17..<22:
+                    return "Relax and chill in a spotless home!"
+                default:
+                    return "Let's schedule your next cleaning!"
+                }
+            } else {
+                // If there are active orders, show a different message
+                return "Your cleaning service is scheduled"
+            }
+        }
+    
 }
